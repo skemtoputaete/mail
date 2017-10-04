@@ -1,9 +1,9 @@
 require 'net/smtp'
 require 'openssl'
 
-module Mail
+# module SMTPMail
   class Sender
-    def initialize(smtp_host, email, password, ssl_port)
+    def initialize(smtp_host, email, password, ssl_port = nil)
       @smtp_host = smtp_host
       @email = email
       @login = email.split('@')[0]
@@ -22,16 +22,15 @@ module Mail
       end
     end
 
-    private
-
     def create_message(message_parts)
       emails = modify_emails message_parts[:emails]
-      message = <<END_OF_MESSAGE
-      From: #{message_parts[:name]} <#{@email}>
-      To: #{emails}
-      Subject: #{message_parts[:subject]}
-      Date: #{Time.now.strftime("%a, %d %b %Y %H:%M:%S %z")}
-      #{message_parts[:body]}
+message = <<END_OF_MESSAGE
+From: #{message_parts[:name]} <#{@email}>
+To: #{emails}
+Subject: #{message_parts[:subject]}
+Date: #{Time.now.strftime("%a, %d %b %Y %H:%M:%S %z")}
+
+#{message_parts[:body]}
 END_OF_MESSAGE
     end
 
@@ -48,5 +47,9 @@ END_OF_MESSAGE
       emails_arr = emails.split(',')
       emails_arr = emails_arr.map { |e| e.scan(/\S+@\S+/i)[0].delete(' ,') }
     end
+
+    def t
+      [@login, @password, @email, @smtp_host]
+    end
   end
-end
+# end
