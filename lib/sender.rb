@@ -12,7 +12,7 @@ module Mail
     end
 
     def send_email(message_parts)
-      emails_arr = message_parts[:emails].split(',').map { |e| e.delete(' ') }
+      emails_arr = get_only_emails(message_parts[:emails])
       message = create_message(message_parts)
 
       smtp = Net::SMTP.new @smtp_host, 25
@@ -26,7 +26,7 @@ module Mail
 
     def create_message(message_parts)
       emails = modify_emails message_parts[:emails]
-      msgstr = <<END_OF_MESSAGE
+      message = <<END_OF_MESSAGE
       From: #{message_parts[:name]} <#{@email}>
       To: #{emails}
       Subject: #{message_parts[:subject]}
@@ -37,9 +37,16 @@ END_OF_MESSAGE
 
     def modify_emails(emails)
       emails_arr = emails.split(',')
-      emails_arr.each do |email|
-
+      emails_arr = emails_arr.map do |e|
+        email = e.scan(/\S+@\S+/i)[0].delete(' ,')
+        e.gsub!(email, "<#{email}>")
       end
+      emails_arr.join(', ')
+    end
+
+    def get_only_emails(emails)
+      emails_arr = emails.split(',')
+      emails_arr = emails_arr.map { |e| e.scan(/\S+@\S+/i)[0].delete(' ,') }
     end
   end
 end
