@@ -27,6 +27,8 @@ module Mailer
       end
     end
 
+    private
+
     def create_message(message_parts)
       emails = modify_emails message_parts[:emails]
 message = <<END_OF_MESSAGE
@@ -51,10 +53,6 @@ END_OF_MESSAGE
     def get_only_emails(emails)
       emails_arr = emails.split(',')
       emails_arr = emails_arr.map { |e| e.scan(/\S+@\S+/i)[0].delete(' ,') }
-    end
-
-    def t
-      [@login, @password, @email, @smtp_host]
     end
   end
 end
