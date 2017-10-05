@@ -1,24 +1,29 @@
 require 'net/smtp'
 require 'openssl'
 
-# module SMTPMail
+module Mailer
   class Sender
-    def initialize(smtp_host, email, password, ssl_port = nil)
+    def initialize(smtp_host, email, password, options = {})
       @smtp_host = smtp_host
       @email = email
-      @login = email.split('@')[0]
       @password = password
-      @ssl_port = ssl_port
+      @port = options[:port].nil? ? 25 : options[:port]
+      @login = options[:login].nil? ? email : options[:login]
+      @auth_type = options[:auth].nil? ? :login : options[:auth].to_sym
     end
 
     def send_email(message_parts)
       emails_arr = get_only_emails(message_parts[:emails])
       message = create_message(message_parts)
 
-      smtp = Net::SMTP.new @smtp_host, 25
-      smtp.enable_starttls
-      smtp.start('localhost', @login, @password, :login) do |smtp|
-        smtp.send_message message, @email, emails_arr
+      smtp = Net::SMTP.new @smtp_host, @port
+      smtp.enable_starttls_auto
+      begin
+        smtp.start('localhost', @email, @password, @auth_type) do |smtp|
+          smtp.send_message message, @login, emails_arr
+        end
+      rescue => error
+        puts "Error occured: #{error.message}"
       end
     end
 
@@ -52,4 +57,4 @@ END_OF_MESSAGE
       [@login, @password, @email, @smtp_host]
     end
   end
-# end
+end
