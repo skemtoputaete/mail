@@ -3,13 +3,13 @@ require 'openssl'
 
 module Mailer
   class Sender
-    def initialize(smtp_host, email, password, options = {})
-      @smtp_host = smtp_host
-      @email = email
-      @password = password
-      @port = options[:port].nil? ? 25 : options[:port]
-      @login = options[:login].nil? ? email : options[:login]
-      @auth_type = options[:auth].nil? ? :login : options[:auth].to_sym
+    def initialize(required = {}, optional = {})
+      @smtp_host = required[:smtp_host]
+      @email = required[:email]
+      @password = required[:password]
+      @port = optional[:port].nil? ? 25 : optional[:port].to_i
+      @login = optional[:login].nil? ? email : optional[:login]
+      @auth_type = optional[:auth].nil? ? :login : optional[:auth].to_sym
     end
 
     def send_email(message_parts)
