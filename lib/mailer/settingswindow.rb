@@ -9,9 +9,6 @@ module Mailer
       show_all
     end
 
-    # Return array with two hash:
-    # 1. required parametres
-    # 2. optional parametres
     def get_user_settings
       [
         { smtp_host: @smtp_host, email: @email, password: @password },
@@ -21,7 +18,7 @@ module Mailer
 
     private
     def settings(&block)
-      set_title 'Center'
+      set_title 'Settings for email app'
       set_tooltip_text 'Application for sending an email'
       set_default_size 400, 250
       set_window_position Gtk::WindowPosition::CENTER
