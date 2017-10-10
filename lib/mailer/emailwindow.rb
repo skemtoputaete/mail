@@ -10,9 +10,11 @@ module Mailer
     end
 
     def sender_settings(user_settings = nil)
-      @required = user_settings.first
-      @optionally = user_settings.last
-      @sender = Mailer::Sender.new(@required, @optionally)
+      unless user_settings.nil?
+        @required = user_settings.first
+        @optionally = user_settings.last
+        @sender = Mailer::Sender.new(@required, @optionally)
+      end
     end
 
     private
@@ -28,10 +30,12 @@ module Mailer
 
     def elements
       grid = Gtk::Grid.new
+      name = Gtk::Entry.new
       subject = Gtk::Entry.new
       email = Gtk::TextView.new
       receivers = Gtk::Entry.new
       receivers_l = Gtk::Label.new('To:')
+      name_l = Gtk::Label.new('Your name:')
       btn_box = Gtk::ButtonBox.new :horizontal
       vbox = Gtk::Box.new :vertical, 3
       subject_l = Gtk::Label.new('Subject:')
@@ -50,16 +54,23 @@ module Mailer
 
       send_btn.signal_connect 'clicked' do
         message_parts = {}
-        message_parts[:emails] = receivers.text
-        message_parts[:subject] = subject.text
+        message_parts[:name] = name.text
         message_parts[:body] = buffer.text
-        send_email_msg message_parts
+        message_parts[:subject] = subject.text
+        message_parts[:emails] = receivers.text
+        # send_email_msg message_parts
+        name.text = ''
+        buffer.text = ''
+        subject.text = ''
+        receivers.text = ''
       end
 
-      grid.attach subject_l, 0, 0, 1, 1
-      grid.attach subject, 2, 0, 4, 1
+      grid.attach subject_l,   0, 0, 1, 1
+      grid.attach subject,     2, 0, 1, 1
       grid.attach receivers_l, 0, 1, 1, 1
-      grid.attach receivers, 2, 1, 1, 1
+      grid.attach receivers,   2, 1, 1, 1
+      grid.attach name_l,      0, 2, 1, 1
+      grid.attach name,        2, 2, 1, 1
 
       btn_box.pack_start send_btn, expand: false, fill: true, padding: 5
       btn_box.set_layout Gtk::ButtonBoxStyle::END
