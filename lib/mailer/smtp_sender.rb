@@ -2,7 +2,7 @@ require 'net/smtp'
 require 'openssl'
 
 module Mailer
-  class Sender
+  class SMPTSender
     def initialize(required = {}, optional = {})
       @smtp_host = required[:smtp_host]
       @email = required[:email]
