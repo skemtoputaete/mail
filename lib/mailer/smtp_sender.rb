@@ -8,7 +8,7 @@ module Mailer
       @email = required[:email]
       @password = required[:password]
       @port = optional[:port].nil? ? 25 : optional[:port].to_i
-      @login = optional[:login].nil? ? email : optional[:login]
+      @login = optional[:login].nil? ? :email : optional[:login]
       @auth_type = optional[:auth].nil? ? :login : optional[:auth].to_sym
     end
 
