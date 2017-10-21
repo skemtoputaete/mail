@@ -1,27 +1,60 @@
 require 'openssl'
 require 'socket'
+require "base64"
 
 module Mailer
   class TCPSender
     def initialize(host, port)
       @tcp_socket = TCPSocket.new(host, port)
       @ssl_context = OpenSSL::SSL::SSLContext.new
+      @ssl_context.ca_file = 'ca_cert.pem'
+      @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      @ssl_context.ssl_version = :SSLv23
       @ssl_socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, @ssl_context)
       @ssl_socket.connect
     end
 
     def set_params(params)
       @email = params[:email]
-      @password = params[:password]
       @login = params[:login]
+      @password = params[:password]
+      @encoded_pas = Base64.encode64(@password)
+      @encoded_log = Base64.encode64(@login)
     end
 
     def send_email(message_params)
+      commands = ['EHLO localhost',
+                  'AUTH LOGIN',
+                  "MAIL FROM: <#{@email}>",
+                  'RCPT',
+                  'DATA',
+                  'MSG',
+                  'QUIT']
 
-    end
+      commands.each do |command|
+        case command[0,4]
+        when 'RCPT'
+          get_only_emails(message_params[:emails]).each do |email|
+            @ssl_socket.puts "RCPT TO: <#{email}>"
+          end
+        when 'MSG'
+          @ssl_socket.puts create_message(message_params)
+        else
+          @ssl_socket.puts command
+        end
 
-    def authorize
-
+        result = read
+        next if result == true
+        if result =~ /username/i
+          @ssl_socket.puts @encoded_log
+          @ssl_socket.puts @encoded_pas if read =~ /password/i
+          auth_res = read
+          next if auth_res == true
+          raise "Authentication problems. Message from server:\n#{auth_res}"
+        end
+        raise "An error occured. Message from server:\n#{result}"
+      end
+      read
     end
 
     private
@@ -34,6 +67,7 @@ Subject: #{message_parts[:subject]}
 Date: #{Time.now.strftime("%a, %d %b %Y %H:%M:%S %z")}
 
 #{message_parts[:body]}
+.
 END_OF_MESSAGE
     end
 
@@ -49,6 +83,42 @@ END_OF_MESSAGE
     def get_only_emails(emails)
       emails_arr = emails.split(',')
       emails_arr = emails_arr.map { |e| e.scan(/\S+@\S+/i)[0].delete(' ,') }
+    end
+
+    def read
+      buffer = ""
+      while next_line_readable?(@ssl_socket)
+        line = @ssl_socket.gets
+        break if line.nil?
+        buffer << line
+        puts line
+      end
+      analyze(buffer)
+    end
+
+    def next_line_readable?(socket)
+      readfds, writefds, exceptfds = select([socket], nil, nil, 0.1) # IO.select
+      readfds
+    end
+
+    def analyze(buffer)
+      buffer.each_line do |line|
+        case line[0,3]
+          when "220"
+          when "221"
+          when "235"
+          when "250"
+          when "354"
+            next
+          when "334"
+            return Base64.decode64(line.split.last)
+          when "503"
+            return line
+          else
+            next
+        end
+      end
+      return true
     end
   end
 end
