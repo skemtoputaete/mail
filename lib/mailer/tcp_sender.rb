@@ -23,19 +23,19 @@ module Mailer
     end
 
     def send_email(message_params)
-      commands = ['EHLO localhost',
-                  'AUTH LOGIN',
-                  "MAIL FROM: <#{@email}>",
-                  'RCPT',
-                  'DATA',
-                  'MSG',
-                  'QUIT']
+      commands = ["EHLO localhost\r\n",
+                  "AUTH LOGIN\r\n",
+                  "MAIL FROM: <#{@email}>\r\n",
+                  "RCPT",
+                  "DATA\r\n",
+                  "MSG",
+                  "QUIT\r\n"]
 
       commands.each do |command|
         case command[0,4]
         when 'RCPT'
           get_only_emails(message_params[:emails]).each do |email|
-            @ssl_socket.puts "RCPT TO: <#{email}>"
+            @ssl_socket.puts "RCPT TO: <#{email}>\r\n"
           end
         when 'MSG'
           @ssl_socket.puts create_message(message_params)
@@ -89,9 +89,9 @@ END_OF_MESSAGE
       buffer = ""
       while next_line_readable?(@ssl_socket)
         line = @ssl_socket.gets
+        $stdout.puts "Message from server: #{line}"
         break if line.nil?
         buffer << line
-        puts line
       end
       analyze(buffer)
     end
