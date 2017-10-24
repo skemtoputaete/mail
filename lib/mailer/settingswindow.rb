@@ -11,7 +11,7 @@ module Mailer
 
     def get_user_settings
       [
-        { smtp_host: @smtp_host, email: @email, password: @password },
+        { smtp_host: @smtp_host, email: @email, password: @password, sender: @sender },
         { port: @port, login: @login, auth: @auth }
       ]
     end
@@ -44,6 +44,7 @@ module Mailer
       pswrd = Gtk::Entry.new
       login = Gtk::Entry.new
       auth = Gtk::ComboBoxText.new
+      sender = Gtk::ComboBoxText.new
 
       # Labels
       port_l = Gtk::Label.new('Port:')
@@ -68,6 +69,9 @@ module Mailer
       auth.append_text 'Plain'
       auth.append_text 'Cram md5'
 
+      sender.append_text 'SMTP class (Ruby)'
+      sender.append_text 'Custom class'
+
       accept_btn.set_size_request 50, 15
       accept_btn.signal_connect 'clicked' do
         @email = email.text
@@ -76,6 +80,7 @@ module Mailer
         @login = login.text
         @auth = auth.active_text
         @port = port.text
+        @sender = sender.active_text
       end
 
       # Adding elemens to the grid's cells
@@ -93,7 +98,8 @@ module Mailer
       grid.attach login,        1, 6, 1, 1
       grid.attach auth_l,       0, 7, 1, 1
       grid.attach auth,         1, 7, 1, 1
-      grid.attach accept_btn,   1, 8, 1, 1
+      grid.attach sender,       1, 8, 1, 1
+      grid.attach accept_btn,   1, 9, 1, 1
 
       vbox.pack_start grid, expand: true, fill: true, padding: 0
       add vbox

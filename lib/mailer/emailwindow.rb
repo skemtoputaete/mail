@@ -9,11 +9,24 @@ module Mailer
       show_all
     end
 
-    def sender_settings(user_settings = nil)
+    def sender_settings(user_settings = nil, sender = :smtp_class)
       unless user_settings.nil?
         @required = user_settings.first
         @optionally = user_settings.last
-        @sender = Mailer::Sender.new(@required, @optionally)
+        if sender == :smtp_class
+          @sender = Mailer::SMTPSender.new(@required, @optionally)
+        else
+          smtp_host = @required[:smtp_host]
+          port = @optionally[:port].nil? ? 465 : @optionally[:port].to_i
+          login = @optionally[:login].nil? ? @email.scan(/\S+@/).delete('@') : @optionally[:login]
+          sender_settings = {
+            email: @required[:email],
+            login: login,
+            password: @required[:password]
+          }
+          @sender = Mailer::TCPSender.new(smtp_host, port)
+          @sender.set_params sender_settings
+        end
       end
     end
 
@@ -58,7 +71,7 @@ module Mailer
         message_parts[:body] = buffer.text
         message_parts[:subject] = subject.text
         message_parts[:emails] = receivers.text
-        # send_email_msg message_parts
+        send_email_msg message_parts
         name.text = ''
         buffer.text = ''
         subject.text = ''
